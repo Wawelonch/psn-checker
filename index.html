@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Генератор ников для PSN (5 букв)</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: #fff;
+            min-height: 100vh;
+            padding: 15px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        h1 {
+            text-align: center;
+            font-size: 1.6em;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #00d2ff, #3a7bd5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .subtitle {
+            text-align: center;
+            color: #b0b0d0;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+        }
+        .auth-section {
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 14px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .auth-section h3 { margin-bottom: 8px; color: #00d2ff; font-size: 1em; }
+        .auth-section p {
+            font-size: 0.8em;
+            color: #b0b0d0;
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+        .auth-section a { color: #00d2ff; }
+        .auth-section input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #555;
+            background: #1a1a2e;
+            color: #fff;
+            font-family: monospace;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        .auth-section button {
+            width: 100%;
+            background: #00e676;
+            color: #000;
+            padding: 12px;
+            font-size: 0.95em;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        #auth-status { font-size: 0.85em; margin-top: 10px; }
+        .status-auth-ok { color: #00e676; }
+        .status-auth-error { color: #ff5252; }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .controls button {
+            flex: 1;
+            min-width: 140px;
+            padding: 12px;
+            font-size: 0.9em;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+        #generate-btn { background: linear-gradient(135deg, #00d2ff, #3a7bd5); color: #fff; }
+        #check-all-btn { background: linear-gradient(135deg, #f7971e, #ffd200); color: #1a1a2e; }
+        .names-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .name-card {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 12px 8px;
+            text-align: center;
+            cursor: pointer;
+        }
+        .name-text {
+            font-size: 1.15em;
+            font-weight: 700;
+            letter-spacing: 2px;
+        }
+        .status { font-size: 0.7em; margin-top: 5px; min-height: 14px; font-weight: 500; }
+        .status.available { color: #00e676; }
+        .status.taken { color: #ff5252; }
+        .status.checking { color: #ffd740; }
+        .status.error { color: #9e9e9e; }
+        .status.unknown { color: #b0b0d0; }
+        .copy-hint { font-size: 0.6em; color: #8080a0; margin-top: 3px; }
+        .legend {
+            text-align: center;
+            color: #8080a0;
+            font-size: 0.8em;
+            margin-top: 15px;
+            line-height: 1.8;
+        }
+        .legend .dot {
+            display: inline-block;
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            margin-right: 3px;
+        }
+        .dot-green { background: #00e676; }
+        .dot-red { background: #ff5252; }
+        .dot-yellow { background: #ffd740; }
+        .disclaimer {
+            background: rgba(255, 215, 0, 0.1);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            border-radius: 10px;
+            padding: 12px;
+            margin-top: 20px;
+            font-size: 0.78em;
+            color: #ffd740;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 Генератор ников для PSN</h1>
+        <p class="subtitle">Случайные ники из 5 букв. Нажми на ник, чтобы скопировать.</p>
+
+        <div class="auth-section">
+            <h3>🔑 Шаг 1: Вход</h3>
+            <p>
+                Вставь <strong>NPSSO-токен</strong> (64 символа).
+                <a href="https://ca.account.sony.com/api/v1/ssocookie" target="_blank">Как получить?</a>
+            </p>
+            <input type="password" id="npsso-input" placeholder="Вставь NPSSO-токен...">
+            <button id="auth-btn">Войти</button>
+            <div id="auth-status"></div>
+        </div>
+
+        <div class="controls">
+            <button id="generate-btn">Сгенерировать</button>
+            <button id="check-all-btn">Проверить все</button>
+        </div>
+
+        <div id="names-grid" class="names-grid"></div>
+
+        <div class="legend">
+            <span class="dot dot-green"></span> Свободен &nbsp;
+            <span class="dot dot-red"></span> Занят &nbsp;
+            <span class="dot dot-yellow"></span> Проверка &nbsp;
+            <span style="color:#9e9e9e;">●</span> Ошибка
+        </div>
+
+        <div class="disclaimer">
+            ⚠️ Ники генерируются случайно при каждом нажатии. Если статус «Ошибка» — обнови NPSSO-токен или подожди пару минут (лимит запросов).
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        // ГЕНЕРАТОР СЛУЧАЙНЫХ 5-БУКВЕННЫХ НИКОВ
+        // ============================================================
+        const VOWELS = ['a', 'e', 'i', 'o', 'u', 'y'];
+        const CONSONANTS = [
+            'k', 'v', 'x', 'z', 'r', 'n', 't', 's', 'd', 'f', 'l', 'm',
+            'b', 'p', 'g', 'c',
+            'h', 'j', 'w',
+            'k', 'v', 'x', 'z', 'r', 'n', 't', 's'
+        ];
+
+        function pick(arr) {
+            return arr[Math.floor(Math.random() * arr.length)];
+        }
+
+        // Сгенерировать один ник (гарантированно 5 букв)
+        function genRandomNick() {
+            for (let attempt = 0; attempt < 100; attempt++) {
+                const type = Math.random();
+                let name;
+
+                if (type < 0.35) {
+                    // CVCVC: Kavox, Nyzor, Vexan
+                    name = pick(CONSONANTS) + pick(VOWELS) + pick(CONSONANTS) + pick(VOWELS) + pick(CONSONANTS);
+                } else if (type < 0.60) {
+                    // CVCCV: Vexxa, Zyrna, Kaxzo
+                    name = pick(CONSONANTS) + pick(VOWELS) + pick(CONSONANTS) + pick(CONSONANTS) + pick(VOWELS);
+                } else if (type < 0.80) {
+                    // CCVCV: Zvako, Kxeno, Nvaxi
+                    name = pick(CONSONANTS) + pick(CONSONANTS) + pick(VOWELS) + pick(CONSONANTS) + pick(VOWELS);
+                } else {
+                    // CVVCV: Kaeno, Zyoxi, Vauro
+                    name = pick(CONSONANTS) + pick(VOWELS) + pick(VOWELS) + pick(CONSONANTS) + pick(VOWELS);
+                }
+
+                // Проверка длины (на всякий случай)
+                if (name.length !== 5) continue;
+
+                // Не более 2 одинаковых букв подряд (никаких "Kaaax")
+                let bad = false;
+                for (let i = 0; i < 3; i++) {
+                    if (name[i] === name[i+1] && name[i] === name[i+2]) {
+                        bad = true;
+                        break;
+                    }
+                }
+                if (bad) continue;
+
+                // Не начинаем с "y"
+                if (name[0] === 'y') continue;
+
+                return name;
+            }
+            return 'Kairo';
+        }
+
+        // Сгенерировать N уникальных ников
+        function generateUniqueNicks(count) {
+            const set = new Set();
+            let attempts = 0;
+            while (set.size < count && attempts < 1000) {
+                set.add(genRandomNick());
+                attempts++;
+            }
+            return Array.from(set);
+        }
+
+        // ============================================================
+        // ОСНОВНАЯ ЛОГИКА
+        // ============================================================
+        const grid = document.getElementById('names-grid');
+        const generateBtn = document.getElementById('generate-btn');
+        const checkAllBtn = document.getElementById('check-all-btn');
+        const npssoInput = document.getElementById('npsso-input');
+        const authBtn = document.getElementById('auth-btn');
+        const authStatus = document.getElementById('auth-status');
+
+        let currentNames = [];
+        let npssoToken = null;
+        let accessToken = null;
+        let accessTokenExpiry = 0;
+
+        authBtn.addEventListener('click', async () => {
+            const token = npssoInput.value.trim();
+            if (token.length !== 64) {
+                authStatus.textContent = '❌ Токен должен быть 64 символа';
+                authStatus.className = 'status-auth-error';
+                npssoToken = null; accessToken = null;
+                return;
+            }
+            authStatus.textContent = '⏳ Проверка токена...';
+            authStatus.className = '';
+            npssoToken = token;
+            accessToken = null;
+            try {
+                await getAccessToken(true);
+                authStatus.textContent = '✅ Успешный вход! Можно проверять ники.';
+                authStatus.className = 'status-auth-ok';
+            } catch (err) {
+                authStatus.textContent = '❌ ' + err.message;
+                authStatus.className = 'status-auth-error';
+                npssoToken = null; accessToken = null;
+            }
+        });
+
+        async function getAccessToken(force = false) {
+            if (!npssoToken) throw new Error('Сначала введи NPSSO');
+            if (!force && accessToken && Date.now() < accessTokenExpiry) {
+                return accessToken;
+            }
+            const response = await fetch('/api/token', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ npsso: npssoToken }),
+            });
+            if (!response.ok) throw new Error('Неверный или истёкший NPSSO');
+            const data = await response.json();
+            if (!data.access_token) throw new Error('Не удалось получить токен');
+            accessToken = data.access_token;
+            accessTokenExpiry = Date.now() + ((data.expires_in || 3600) - 300) * 1000;
+            return accessToken;
+        }
+
+        async function checkAvailability(name) {
+            const statusEl = document.getElementById(`status-${name}`);
+            if (!statusEl) return;
+            if (!npssoToken) {
+                statusEl.textContent = 'Требуется вход';
+                statusEl.className = 'status error';
+                return;
+            }
+            statusEl.textContent = 'Проверка...';
+            statusEl.className = 'status checking';
+            try {
+                if (!accessToken || Date.now() >= accessTokenExpiry) {
+                    await getAccessToken();
+                }
+                const response = await fetch(`/api/check/${encodeURIComponent(name)}`, {
+                    headers: { 'Authorization': `Bearer ${accessToken}` },
+                });
+                if (response.status === 200) {
+                    statusEl.textContent = 'Занят';
+                    statusEl.className = 'status taken';
+                } else if (response.status === 404) {
+                    statusEl.textContent = 'Свободен';
+                    statusEl.className = 'status available';
+                } else if (response.status === 401) {
+                    await getAccessToken(true);
+                    statusEl.textContent = 'Повтори';
+                    statusEl.className = 'status error';
+                } else if (response.status === 429) {
+                    statusEl.textContent = 'Лимит';
+                    statusEl.className = 'status error';
+                } else {
+                    statusEl.textContent = 'Ошибка';
+                    statusEl.className = 'status error';
+                }
+            } catch (e) {
+                statusEl.textContent = 'Ошибка';
+                statusEl.className = 'status error';
+            }
+        }
+
+        function generateNames(count = 12) {
+            currentNames = generateUniqueNicks(count);
+            renderNames();
+        }
+
+        function renderNames() {
+            grid.innerHTML = '';
+            currentNames.forEach(name => {
+                const card = document.createElement('div');
+                card.className = 'name-card';
+                const nameText = document.createElement('div');
+                nameText.className = 'name-text';
+                nameText.textContent = name;
+                const status = document.createElement('div');
+                status.className = 'status unknown';
+                status.id = `status-${name}`;
+                status.textContent = '—';
+                const copyHint = document.createElement('div');
+                copyHint.className = 'copy-hint';
+                copyHint.textContent = 'копировать';
+                card.appendChild(nameText);
+                card.appendChild(status);
+                card.appendChild(copyHint);
+                card.addEventListener('click', async () => {
+                    try {
+                        await navigator.clipboard.writeText(name);
+                        copyHint.textContent = '✅ скопировано';
+                        setTimeout(() => { copyHint.textContent = 'копировать'; }, 1500);
+                    } catch (e) {
+                        copyHint.textContent = '❌ ошибка';
+                    }
+                });
+                grid.appendChild(card);
+            });
+        }
+
+        async function checkAll() {
+            if (!npssoToken) {
+                authStatus.textContent = '⚠️ Сначала войди (введи NPSSO)';
+                authStatus.className = 'status-auth-error';
+                return;
+            }
+            if (currentNames.length === 0) generateNames();
+            for (const name of currentNames) {
+                await checkAvailability(name);
+                await new Promise(r => setTimeout(r, 400));
+            }
+        }
+
+        generateBtn.addEventListener('click', () => generateNames());
+        checkAllBtn.addEventListener('click', checkAll);
+        generateNames();
+    </script>
+</body>
+</html>
